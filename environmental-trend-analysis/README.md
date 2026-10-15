@@ -95,6 +95,19 @@ A project-specific Python virtual environment was created to isolate dependencie
 
 Git was used to track changes, inspect modifications with `git diff`, restore an earlier working version, and synchronize the project with GitHub.
 
+
+## Reproducibility
+
+This analysis was developed in Python using a project-specific virtual environment.
+
+To reproduce the analysis:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r environmental-trend-analysis/requirements.txt
+python3 environmental-trend-analysis/analysis.py
+
 ## Next Steps
 
 Future exercises will extend this workflow using:
