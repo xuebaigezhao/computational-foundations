@@ -118,3 +118,16 @@ Future exercises will extend this workflow using:
 - uncertainty estimation
 - validation on unseen observations
 - larger environmental datasets
+## Data
+
+The datasets in this exercise are illustrative and were created for
+computational training rather than climate inference.
+
+Variables:
+
+- `year`: observation year
+- `temperature`: illustrative summer mean air temperature in degrees Celsius (°C)
+
+`temperature_observations_dirty.csv` intentionally contains missing values,
+a duplicate year, and an implausible temperature value for data-quality
+checking practice.
