@@ -1,3 +1,10 @@
+
 .venv/
 __pycache__/
 .DS_Store
+
+# Python cache files
+*.py[cod]
+
+# Local backup files
+*.bak

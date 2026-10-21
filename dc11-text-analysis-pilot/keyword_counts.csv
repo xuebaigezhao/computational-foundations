@@ -1,0 +1,19 @@
+doc_id,keyword_group,count,total_word_tokens,count_per_100_words
+SCI01,response diversity,7,230,3.043
+SCI01,resilience,0,230,0.0
+SCI01,stability,1,230,0.435
+SCI01,environmental change,0,230,0.0
+SCI01,biodiversity,2,230,0.87
+SCI01,monitoring,1,230,0.435
+SCI02,response diversity,11,249,4.418
+SCI02,resilience,1,249,0.402
+SCI02,stability,2,249,0.803
+SCI02,environmental change,2,249,0.803
+SCI02,biodiversity,2,249,0.803
+SCI02,monitoring,0,249,0.0
+POL01,response diversity,0,286,0.0
+POL01,resilience,0,286,0.0
+POL01,stability,0,286,0.0
+POL01,environmental change,0,286,0.0
+POL01,biodiversity,3,286,1.049
+POL01,monitoring,2,286,0.699

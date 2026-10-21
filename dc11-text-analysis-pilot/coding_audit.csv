@@ -1,0 +1,15 @@
+﻿doc_id,section_reference,initial_code,excerpt_found,audit_status
+SCI01,Abstract,Trait-based proxy measurement,True,PASS
+SCI01,Abstract,Environment-dependent ecological response measurement,True,PASS
+SCI02,Abstract,Limited empirical measurement,True,PASS
+SCI02,Abstract,Methodological standardisation and data requirements,True,PASS
+POL01,1(a),Habitat condition and quality trends,True,PASS
+POL01,1(b),Urban green space and tree canopy cover,True,PASS
+POL01,1(c),Agricultural biodiversity indicators,True,PASS
+POL01,1(d),Common farmland bird populations,True,PASS
+POL01,1(e),Forest biodiversity indicator,True,PASS
+POL01,1(f),Selected forest biodiversity indicators,True,PASS
+POL01,1(g),Pollinator abundance and diversity,True,PASS
+POL01,1(h),Area and condition of listed habitats,True,PASS
+POL01,1(i),Species habitat area and quality,True,PASS
+POL01,1(j),Spatial extent of habitat deterioration and compensatory measure effectiveness,True,PASS
