@@ -99,3 +99,16 @@ The findings should therefore be interpreted as preliminary.
 The project uses Python and pandas for data handling and analysis. Scripts, structured outputs and coding records support transparent inspection of the analytical workflow.
 
 All interpretations should remain traceable to the collected text and should distinguish textual evidence from researcher inference.
+## Source Texts and Reuse
+
+This project includes selected text from two open-access scientific articles and one provision of EU legislation for non-commercial research and educational purposes.
+
+- **SCI01:** Ross, S. R. P.-J., Petchey, O. L., Sasaki, T., & Armitage, D. W. (2023). *How to measure response diversity*. Methods in Ecology and Evolution, 14, 1150–1167. https://doi.org/10.1111/2041-210X.14087
+- **SCI02:** Ross, S. R. P.-J., & Sasaki, T. (2024). *Limited theoretical and empirical evidence that response diversity determines the resilience of ecosystems to environmental change*. Ecological Research, 39(2), 115–130. https://doi.org/10.1111/1440-1703.12434
+- **POL01:** European Parliament and Council of the European Union. (2024). *Regulation (EU) 2024/1991 on nature restoration*, Article 20(1)(a)–(j). https://eur-lex.europa.eu/eli/reg/2024/1991/oj/eng
+
+The two scientific articles are published under Creative Commons Attribution-NonCommercial licences, as indicated by their publishers. Their reuse must comply with the applicable licence terms, including attribution and non-commercial use.
+
+EU-owned content on EUR-Lex is generally reusable under the European Commission's CC BY 4.0 reuse policy unless otherwise indicated. The official source should be acknowledged, and any modifications should be identified.
+
+The source texts remain subject to their respective reuse conditions. These conditions are separate from any licence that may apply to original code or other materials in this repository.
