@@ -49,6 +49,14 @@ Keyword results and qualitative coding were compared to examine differences betw
 
 Keyword counts were treated as exploratory indicators rather than direct measures of conceptual importance.
 
+### Semantic similarity experiment
+
+As a final exploratory step, I used a pretrained sentence-embedding model to compare a scientific definition of response diversity with the ten policy monitoring clauses.
+
+The analysis ranked policy clauses by cosine similarity to the scientific definition. Clause 1(g), concerning pollinator abundance and diversity, received the highest similarity score. Manual interpretation showed, however, that species diversity is not equivalent to response diversity because the clause does not measure variation in species' responses to environmental change.
+
+This experiment illustrates the complementary roles of AI-assisted retrieval and human interpretation: semantic similarity can identify potentially relevant passages, but it cannot establish conceptual equivalence.
+
 ## 5. Preliminary Findings
 
 In the collected text units:
@@ -56,6 +64,7 @@ In the collected text units:
 - The phrase "response diversity" occurred seven times in SCI01 and eleven times in SCI02.
 - Normalised frequencies were approximately 3.04 and 4.42 occurrences per 100 words, respectively.
 - POL01 contains requirements concerning habitat condition, biodiversity indicators, species populations and pollinator abundance and diversity.
+
 - The selected policy provision does not explicitly use the phrase "response diversity".
 
 These observations suggest differences in terminology and emphasis between the selected scientific and policy texts. They do not establish whether the policy incorporates the underlying concept through other indicators or provisions.

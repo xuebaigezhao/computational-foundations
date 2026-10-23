@@ -1,0 +1,11 @@
+﻿rank,section_reference,excerpt,initial_code,broader_theme,semantic_similarity
+1,1(g),the abundance and diversity of pollinator species,Pollinator abundance and diversity,Species and population monitoring,0.5405981
+2,1(j),"the extent and location of the areas where habitat types and habitats of the species have significantly deteriorated and of the areas subject to compensatory measures taken under Article 4(13), as well as the effectiveness of the compensatory measures",Spatial extent of habitat deterioration and compensatory measure effectiveness,Habitat deterioration and compensatory measures,0.5194569
+3,1(e),the biodiversity indicator for forest ecosystems referred to in Article 12(2),Forest biodiversity indicator,Ecosystem-specific biodiversity indicators,0.4708953
+4,1(i),"the area and the quality of the habitat of the species referred to in Article 4(7), and Article 5(5)",Species habitat area and quality,Habitat condition and extent,0.44554365
+5,1(a),"the condition and trend in the condition of the habitat types, and the quality and the trend in the quality of the habitats of the species",Habitat condition and quality trends,Habitat condition and extent,0.3969873
+6,1(f),at least six of the biodiversity indicators for forest ecosystems chosen by the Member State,Selected forest biodiversity indicators,Ecosystem-specific biodiversity indicators,0.3910741
+7,1(c),at least two of the biodiversity indicators for agricultural ecosystems chosen by the Member State,Agricultural biodiversity indicators,Ecosystem-specific biodiversity indicators,0.3661852
+8,1(h),the area and condition of the areas covered by the habitat types listed in Annexes I and II,Area and condition of listed habitats,Habitat condition and extent,0.33476216
+9,1(d),the populations of the common farmland bird species listed in Annex V,Common farmland bird populations,Species and population monitoring,0.30875558
+10,1(b),the area of urban green space and urban tree canopy cover within urban ecosystem areas,Urban green space and tree canopy cover,Urban ecosystem monitoring,0.2963584
