@@ -1,0 +1,4 @@
+experiment,accuracy,test_condition,feature_set
+random_split_mfcc,0.92,Random 20% split,MFCC mean + std
+unseen_speaker_mfcc,0.822,Held-out speaker: yweweler,MFCC mean + std
+unseen_speaker_mfcc_duration_energy,0.764,Held-out speaker: yweweler,MFCC mean + std + duration + RMS energy
