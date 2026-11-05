@@ -16,7 +16,14 @@
 
 ## 当前总进度快照
 
-目前已经完成两周左右的基础训练。Week 1 主要解决“能不能独立把一个小分析从数据跑到结果并复现”；Week 2 主要解决“面对多个相关变量时，怎么区分相关、解释、预测和验证”。
+目前已形成四个学习模块（Week 编号表示学习阶段，不一定对应严格的自然周）：
+
+- **Week 1：** Scientific Python、数据清理、简单回归与可复现性。
+- **Week 2：** 环境多变量分析、OLS、共线性、LOOCV 与模型诊断。
+- **Week 3：** NLP 基础、Tokenization、Edit Distance、N-gram、OOV 与 Perplexity。
+- **Week 4：** TF-IDF + Logistic Regression 文本分类、评估、阈值权衡与错误分析。
+
+**当前路线调整：** NLP 分类教学项目已经完成并整理为独立的 `policy-text-classification/` 项目；`nlp-tokenization/` 保留为本地练习目录。下一阶段回到 **Statistical Modelling & Interpretable ML（正则化、交叉验证、模型比较）**，之后推进 EO/GIS。SLP 作为研究工具模块按需要继续，而不是无限深入底层算法。
 
 **现在已经建立的主线：**
 
@@ -786,7 +793,281 @@ loocv_rmse(...)
 
 ---
 
-# 两周连起来的核心研究思维
+# Week 3 — NLP Foundations, N-gram Models & Model Evaluation
+
+> 这一模块服务于日后处理气候政策文件和学术文本。重点是理解文本如何变成数据、统计模型如何预测，以及为什么数据泄漏与词汇覆盖会影响结果。练习代码主要保留在本地 \`nlp-tokenization/\`，不等同于正式研究产出。
+
+## 1. Tokenization、Vocabulary、Type–Token Ratio
+
+### 大白话
+- **Token**：词在文本中每出现一次，就算一次。
+- **Type**：不同的词各算一个。
+- **Vocabulary**：模型认识的词汇集合。
+- **TTR = types / tokens**：粗略描述词汇多样性，但受文本长度影响。
+
+### 关键经验
+\`text.split()\` 对空格分开的玩具文本够用，但处理真实政策文本时，标点、连字符、年份范围、货币及百分比需要基于研究目标制定清洗规则。例如 \`12.5%\`、\`2025-2030\` 不一定应该被拆开。
+
+### 工具与代码
+使用过 \`str.strip()\`、\`lower()\`、\`re.findall()\`、dictionary counting、函数 \`clean_token()\` 与 \`assert\` 测试。
+
+**一句话记忆：** Tokenization 和清洗规则决定模型看见什么；不能把预处理当作中立、无后果的步骤。
+
+---
+
+## 2. Edit Distance：将拼写问题转化成动态规划
+
+### 大白话
+Levenshtein distance 计算把一个字符串变成另一个字符串所需的最少插入、删除、替换操作次数。
+
+### 最小例子
+查询 \`resiliance\` 时，\`resilience\` 的编辑距离是 1，可以用作拼写候选建议。
+
+### 实际写过的逻辑
+- 使用二维矩阵保存子问题；
+- 第一行/列记录从空字符串出发的编辑次数；
+- 比较删除、插入和替换的最小成本；
+- 使用 \`sorted(..., key=lambda ...)\` 排序候选词。
+
+### 研究用途与边界
+对 OCR 错误、名称拼写变体、模糊匹配可能有帮助；但**编辑距离小不等于语义相近**。政策语义比较更适合后续的 embeddings。
+
+---
+
+## 3. Bigram：从词频走向条件概率
+
+### 大白话
+Bigram 研究相邻两个 token；\`P(next | context)\` 表示已知前一个词时，下一个词的条件概率。
+
+### 最小例子
+原始练习中：
+- \`C(energy, policy) = 3\`
+- \`C(energy) = 5\`
+- 因此 \`P(policy | energy) = 3/5 = 0.6\`
+
+### 重要区别
+- \`bigram_counts\` 统计词对；
+- \`context_counts\` 统计某词作为前词的次数；
+- 两种计数必须来自**同一套处理后的训练数据**。
+
+**一句话记忆：** 分子与分母必须描述同一个模型、同一种预处理，否则代码能跑、概率却没有一致的意义。
+
+---
+
+## 4. Zero Probability、Add-one Smoothing、OOV
+
+### 为什么需要
+未在训练语料中出现的组合，MLE 给出 0；但“没有观察到”不等于“真实世界不可能”。
+
+\`\`\`text
+P_add-one(next | context) = (count(context,next)+1) / (count(context)+V)
+\`\`\`
+
+其中 \`V\` 是**可预测词的词汇表大小**。为每个候选词加一次虚拟计数时，分母也必须加 \`V\`。
+
+### 两个不同的问题
+- **Unseen bigram：** 两个词都属于 vocabulary，但这对相邻词没有出现过 → smoothing。
+- **OOV word：** 词本身不属于训练 vocabulary → 可映射为 \`<UNK>\`。
+
+### 做过的实验
+依据整个训练语料的词频，把只出现一次的词映射为 \`<UNK>\`。例如原本 \`energy security\` 与 \`energy transition\` 被合并成 \`energy <UNK>\`，得到 \`P_MLE(<UNK> | energy)=2/5=0.4\`。
+
+### 易错点
+原先曾出现 \`0.0556\` 与 \`0.4000\` 不一致：原因是新模型已经建立，但末尾仍用旧 \`bigram_counts\`、\`context_counts\` 和旧 vocabulary 计算。通过追踪数据来源修复，而非重写整套算法。
+
+**一句话记忆：** OOV 和 unseen combinations 不是一回事；平滑必须对明确的预测词汇表归一化。
+
+---
+
+## 5. Sentence Boundaries 与训练流程
+
+### 问题
+把句子直接拼成一条字符串，会误造跨句 bigram，例如 \`('action','energy')\`。
+
+### 修复
+对每句话分别添加 \`<s>\` 和 \`</s>\`，独立生成 bigrams，再合并计数；不产生 \`('</s>','<s>')\`。
+
+### 特殊标记
+\`<s>\` 是合法 context，但通常不能作为普通 next-word 预测结果；\`</s>\` 可以被预测以表示句子结束。低频词映射不应破坏特殊标记。
+
+### 实际验证
+五句话共生成 **24 个带句界的 bigrams**；\`('<s>','energy')\` 出现 5 次；跨句错误组合不存在。
+
+---
+
+## 6. Train/Test、Data Leakage 与 Perplexity
+
+### 原理
+Vocabulary、低频阈值处理与模型参数应**仅从训练集学习**，测试集只用于独立评估。
+
+### Perplexity
+\`\`\`text
+PPL = [product of conditional next-token probabilities]^(-1/N)
+\`\`\`
+
+在固定测试集和相同 tokenization / vocabulary 处理下，PPL 越低通常表示 next-token prediction 更好。
+
+### 练习结果
+以四句话训练、第五句话测试的玩具示例中，Add-one smoothing 后测试 PPL 约为 **2.9531**。该数字**不能**用于声称模型能有效预测真实政策语言：语料很小，而且大量测试词被映射为 \`<UNK>\`。
+
+### 容易忽略
+如果某个测试 bigram 在 MLE 下概率为 0，整句概率为 0，PPL 趋向无穷大。实际长文本应使用 **log probabilities** 避免数值下溢。
+
+---
+
+## Week 3 — Coding / Debugging / Reflection
+
+- **写过或修改过：** \`analyse_tokens.py\`、\`edit_distance.py\`、\`ngram_model.py\`；函数、dictionary、\`.get()\`、set、list slicing、\`append()\` vs \`extend()\`、\`assert\`、\`lambda\`。
+- **真实 debugging：** 变量名、缩进、旧/新统计字典混用、逐句词频替代全语料词频造成误映射、跨句 bigram。
+- **程序结构：** \`def main()\` 定义主流程，\`if __name__ == "__main__": main()\` 只在直接运行脚本时触发。
+- **独立程度：** 已能解释核心概率和数据流程；完整代码重构仍借助 AI，需要逐渐加强自行修改、复现和测试的能力。
+- **本模块成果：** 理解传统语言模型的基本构成；**不是**声称训练出可用于科研的语言模型。
+
+---
+
+# Week 4 — TF-IDF, Supervised Text Classification & Error Analysis
+
+> 独立展示项目：[\`policy-text-classification/\`](policy-text-classification/)。这是**合成文本的教学演示**，不是已发表研究，也不是可靠的气候政策分类器。
+
+## 1. 从研究问题到特征矩阵
+
+### 研究任务
+区分 **Policy / Governance** 与 **Environmental Science** 文本，理解基线模型如何构建、评估和诊断。
+
+### 概念与最小例子
+- **Bag of Words：** 忽略词序，记录词是否出现或出现次数。
+- **Document-Term Matrix：** 行是文档，列是词语特征。
+- **X / y：** X 为文本特征矩阵，y 为人工指定的正确类别；行和标签必须一一对应。
+- **TF-IDF：** 利用文档内词频和跨文档普遍程度调整特征权重。
+- **Lemmatization / Stemming：** 学习过概念及适用场景，**没有声称此项目已实施词形还原**。
+
+### 关键判断
+单一关键词规则容易 False Positive / False Negative；即使用 TF-IDF，词形和语义变体仍可能无法匹配。
+
+---
+
+## 2. Logistic Regression：理解到足够使用
+
+### 大白话
+分类器计算 \`z = b + Σ(w_i x_i)\`，用 sigmoid 转为概率，依据标签 \`y\` 自动学习各特征权重。
+
+- Sigmoid 将实数映射到 0–1；
+- Binary Cross-Entropy 衡量概率预测与真实标签的偏差；
+- Gradient Descent 通过调整权重与 bias 降低损失；
+- 真正项目里用 \`sklearn.linear_model.LogisticRegression\` 的 \`.fit()\`，**不必自己手写优化器**。
+
+### 重要细节
+使用字符串标签时必须读取 \`classifier.classes_\` 才能正确解释系数方向。在当前运行中，类顺序为 \`['Policy', 'Science']\`，因此 **负系数偏向 Policy，正系数偏向 Science**。
+
+---
+
+## 3. 真实运行结果：教学样本，不作科研性能声明
+
+- **Training texts：** 18
+- **Held-out test texts：** 6（Policy 3、Science 3）
+- **Accuracy：** 4/6 = **66.7%**
+- **Macro F1：** **0.67**
+- **Confusion matrix（rows=actual, columns=predicted；Policy、Science 顺序）：**
+
+\`\`\`text
+[[2, 1],
+ [1, 2]]
+\`\`\`
+
+以 Policy 为正类：TP=2、FN=1、FP=1、TN=2；Policy precision=2/3，recall=2/3。
+
+### 指标如何服务研究问题
+系统性文献综述初筛更需要减少漏报，因此常优先关注 **Recall**；但是增加 Recall 可能提高人工筛选工作量，不能只追求一个指标。
+
+降低 Policy 分类阈值，会让更多文本被判为 Policy。阈值应在**验证集**上选择，再留独立测试集做最终评估；不能反复依据测试集调出一个看起来最好的阈值。
+
+---
+
+## 4. Error Analysis：为什么这两个文本被错分？
+
+### Error A — Science → Policy
+\`\`\`text
+A statistical model estimated drought impacts on plant growth.
+P(Policy) ≈ 0.508
+\`\`\`
+
+- 训练 vocabulary 认识：\`model\`、\`on\`
+- 未认识：\`statistical\`、\`estimated\`、\`drought\`、\`impacts\`、\`plant\`、\`growth\`
+- \`on\` 对 Policy 的负系数贡献约 -0.169（当前 scikit-learn 类顺序下）；\`model\` 对 Science 的正系数贡献约 +0.120。
+
+### Error B — Policy → Science
+\`\`\`text
+Regulatory enforcement determines compliance with emission standards.
+P(Policy) ≈ 0.461
+\`\`\`
+
+- 训练 vocabulary 只认识：\`with\`
+- 未认识：\`regulatory\`、\`enforcement\`、\`determines\`、\`compliance\`、\`emission\`、\`standards\`
+- \`with\` 的系数贡献偏向 Science（约 +0.139）。
+
+### 研究结论
+错误不仅来自样本过少，也与**词汇覆盖不足**有关：决定类别的专业词根本没有进入 TF-IDF 特征空间。需要检验训练数据覆盖、词形变化、领域代表性，不能只调阈值或夸大一个 accuracy 数字。
+
+---
+
+## 5. Model Interpretability：读系数，不神化系数
+
+真实运行中：
+- 倾向 Policy：\`for\` (-0.4139)、\`public\` (-0.3508)、\`emissions\` (-0.2509)、\`carbon\` (-0.2477)；
+- 倾向 Science：\`and\` (+0.4076)、\`in\` (+0.3537)、\`temperature\` (+0.2606)、\`vegetation\` (+0.2357)。
+
+\`for\`、\`and\` 之类功能词出现高权重，提醒我们模型可能学习到小样本的**偶然关联**；这值得做 error analysis，但单凭词权重不能断言原因就是过拟合。还应考虑 sampling bias 与语料代表性。
+
+**一句话记忆：** “模型预测正确”不等于“模型依据可靠”；feature contributions 可以帮助检查依据。
+
+---
+
+## 6. 本模块的 Coding、Debugging 与可复现性
+
+### 已应用
+\`TfidfVectorizer\`、\`LogisticRegression\`、\`make_pipeline\`、\`.fit()\`、\`.predict()\`、\`.predict_proba()\`、\`classification_report\`、\`confusion_matrix\`、\`get_feature_names_out()\`、\`coef_\`、\`classes_\`。
+
+### 实际遇到的问题
+- **\`NameError: model is not defined\`：** 权重分析代码放到 \`main()\` 作用域外；应放在训练模型之后、同一函数内部。
+- **\`can't open file ...\`：** 终端当前目录与脚本实际路径不符；需要正确的相对路径或 \`cd\`。
+- **\`Regulatoryenforcement\`：** 曾在粘贴输出中出现缺空格的显示，检查源数据和 tokenize 结果，避免未经核对就归因于模型。
+- **Git staging：** 只提交 \`policy-text-classification/\`，不误提交未完成的其他目录；用 \`git status\`、\`git diff --cached\` 核对。
+
+### 公开范围与诚实陈述
+- \`policy-text-classification/\` 已作为**教学 mini-project** 整理并推送 GitHub，含 README 和可运行代码。
+- \`nlp-tokenization/\` 主要用于本地学习，暂不需要公开上传。
+- 实验文本是 synthetic data，测试仅 6 篇，不足以支持实际分类器性能结论。
+- 多个脚本在 AI 辅助下形成；下一阶段重点培养独立运行、诊断、解释和复现，而非把代码生成当作独立开发能力。
+
+---
+
+## Week 4 — 现在能做什么？下一步缺什么？
+
+**已经能解释：**
+- 词频与 TF-IDF、X/y、监督学习标签、权重和 sigmoid；
+- Precision、Recall、F1、Confusion Matrix、阈值变化与误报/漏报；
+- 为什么先理解数据覆盖和错误类型，再考虑更复杂的算法；
+- 为什么只用训练集建立词汇表、选择阈值需要验证集。
+
+**仍需加强：**
+- 在没有预写脚本时，独立创建可复现的分析流程；
+- 用更具代表性的数据检验泛化能力；
+- 理解 sklearn Pipeline 的参数、验证设计和指标选择。
+
+**下一阶段主线：**
+1. 返回 \`environmental-multivariable-analysis/\`，学习 **Ridge、Lasso 与 regularization**；
+2. 进一步练习 **cross-validation、model comparison、解释与预测的区别**；
+3. 后续推进 EO/GIS 与可复现环境数据项目；
+4. Embeddings / Transformers 在遇到实际政策语义问题时再学，不再把整本 SLP 的章节推进当作主线。
+
+**本阶段三句话：**
+1. 我需要能解释模型依据哪些数据和特征，而不仅是运行成功。
+2. 一个可复现、边界清楚的小研究项目，比多个未整理的练习更适合 CV 展示。
+3. 方法围绕研究问题服务；Coding Training 的目标是研究能力，不是手写所有算法。
+
+---
+
+# 跨模块的核心研究思维
 
 ## 1. 先问问题，再选工具
 不要：
@@ -852,6 +1133,18 @@ loocv_rmse(...)
 ### VIF
 `VIF = 1 / (1 - R²_j)`
 
+### Bigram conditional probability
+`P(next|context) = C(context,next) / C(context)`
+
+### Add-one smoothing
+`P_add-one = [C(context,next)+1] / [C(context)+V]`
+
+### Logistic regression
+`p = 1 / (1 + exp(-[b + Σ(w_i x_i)]))`
+
+### Precision / Recall / F1
+`Precision = TP/(TP+FP)`; `Recall = TP/(TP+FN)`; `F1 = 2PR/(P+R)`
+
 ---
 
 # 常见误区速查
@@ -887,6 +1180,10 @@ loocv_rmse(...)
 - 为什么一个模型可以预测好但机制解释不可靠。
 - Git 的 working / staging / commit / push 基本流程。
 - 为什么 `.venv` 和 `requirements.txt` 属于 reproducibility。
+- 传统 N-gram 的条件概率、smoothing、OOV、句子边界与 Perplexity 的局限。
+- 如何把文本变成 TF-IDF 特征并训练 Logistic Regression 分类器。
+- Precision、Recall、F1、threshold 与实际研究筛选目标的关系。
+- 如何结合训练词汇覆盖、系数贡献和实际误判做 error analysis。
 
 ---
 
@@ -910,7 +1207,7 @@ loocv_rmse(...)
 
 ---
 
-# Weekly Update Template（Week 3 以后复制此模板）
+# Weekly Update Template（Week 5 以后复制此模板）
 
 ## Week N — [主题]
 
