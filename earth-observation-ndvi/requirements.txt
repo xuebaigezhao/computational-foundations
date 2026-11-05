@@ -1,0 +1,4 @@
+# Versions matching the user's demonstrated Python 3.9 environment
+numpy==2.0.2
+matplotlib==3.9.4
+rasterio==1.4.3

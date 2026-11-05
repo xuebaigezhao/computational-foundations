@@ -1,0 +1,10 @@
+{
+  "id": "S2A_33SVB_20210206_1_L2A",
+  "datetime": "2021-02-06T10:00:19.225000Z",
+  "local_retained_percent": 100.0,
+  "assets": {
+    "red": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/33/S/VB/2021/2/S2A_33SVB_20210206_1_L2A/B04.tif",
+    "nir": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/33/S/VB/2021/2/S2A_33SVB_20210206_1_L2A/B08.tif",
+    "scl": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/33/S/VB/2021/2/S2A_33SVB_20210206_1_L2A/SCL.tif"
+  }
+}
