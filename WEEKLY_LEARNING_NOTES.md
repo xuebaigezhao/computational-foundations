@@ -1067,6 +1067,95 @@ P(Policy) ≈ 0.461
 
 ---
 
+# Week 5 — Earth Observation / GIS: Sentinel-2 NDVI, Data Quality & Scene Selection
+
+> 本阶段使用真实 Sentinel-2 Level-2A 影像，完成从栅格读写、NDVI 计算、地理网格对齐，到 SCL 质量筛选、STAC 影像选择和同像元位置比较。**真实卫星影像不等于已验证的生态研究结论。**
+
+## 1. 本阶段研究问题
+
+**卫星影像的质量和空间样本选择，会怎样改变同一地区的 NDVI 估计？**
+
+这不是单纯“画出绿色地图”，而是学习：哪些像元有资格进入统计？不同日期或不同有效范围的数字能否比较？
+
+## 2. Raster、Pixel、Band：把 NumPy 用在地理影像上
+
+- **Pixel（像元）：** 数组中的一个格子，代表地表某个空间范围。
+- **Raster（栅格）：** 带空间结构的二维或多维像元数组。
+- **Band（波段）：** 卫星观测的不同光谱通道。Sentinel-2 的 B04 为 Red，B08 为 NIR。
+- **NDVI = (NIR - Red) / (NIR + Red)**，在有效分母上逐像元计算。
+
+先使用 5×5 的模拟 Red/NIR 数组，通过 NumPy 向量化得到 NDVI，中心像元 0.80，整幅模拟图平均约 0.323。该数字只属于教学模拟，不代表真实地点。
+
+## 3. GeoTIFF、CRS、Transform
+
+- **GeoTIFF：** 保存栅格数值及地理参考信息；不能指望 VS Code 文本编辑器直接显示二进制 TIFF。
+- **CRS：** 坐标参考系统。本例为 **EPSG:32633（WGS 84 / UTM 33N）**，坐标单位为米。
+- **Pixel size：** 本例 NDVI 为 10 m × 10 m，每像元面积约 100 m²。
+- **Transform：** 将影像的行列位置映射到真实地理坐标。
+- 本例读取 **512 × 512** 的固定窗口，对应约 **26.21 km²**。
+
+### 代码与文件
+
+- 使用 Rasterio 从公开 Sentinel-2 COG 远程读取 B04/B08，处理 no-data 和分母为零的情况。
+- 通过 GDAL/Rasterio 输出带 CRS、transform 和 nodata 信息的浮点型 NDVI GeoTIFF。
+- PNG 只是可视化，不能替代含地理坐标的 GeoTIFF 数据。
+
+## 4. 不能只看绿色：NDVI 分布分析
+
+原影像（**2021-02-21**）的有效数值：minimum −0.101、mean **0.251**、median **0.230**、maximum 0.824。
+
+| 本次探索性 NDVI 区间 | 像元占比 | 面积 |
+|---|---:|---:|
+| Low (<0.2) | 39.8% | 10.44 km² |
+| Moderate (0.2–<0.5) | 54.6% | 14.30 km² |
+| High (≥0.5) | 5.6% | 1.47 km² |
+
+**研究判断：** `cmap`、`vmin`、`vmax` 控制颜色如何显示，并不改变 NDVI。地图“看起来绿”不等于大多数像元 NDVI 很高。0.2 和 0.5 是教学分析阈值，非经过地面验证的植被分类标准。
+
+## 5. SCL Quality Masking：像元质量先于生态解释
+
+- Sentinel-2 L2A 的 **SCL（Scene Classification Layer）** 标识植被、非植被、水体、云、云影、未分类等类别。
+- SCL 原始分辨率 **20 m**，NDVI 为 **10 m**。使用 Rasterio `WarpedVRT` + **nearest-neighbor resampling** 将分类层对齐到相同地理网格；不能直接用两个矩阵的索引相匹配。
+- 本实验仅保留 **SCL 4（Vegetation）和 SCL 5（Not vegetated）**，因此同时排除云、水体、未分类等；**保留比例不是严格意义上的云-free 比例**。
+
+### 实际实验结果
+
+- 初始窗口 262,144 个数值有效像元，只有 **24,416（9.3%）** 属于 SCL 4/5。
+- SCL 8（中概率云）83,396 像元；SCL 9（高概率云）92,064 像元；SCL 7（未分类）61,808 像元。
+- NDVI mean：**0.251 → 0.453**；median：**0.230 → 0.481**。
+- High NDVI ≥ 0.5 的占比：**5.6% → 45.3%**，但分母和空间样本变了；这**不是**植被突然变好。
+
+## 6. STAC 影像筛选与同一空间网格对照
+
+- 用公开的 **Earth Search STAC API**，在 **2021 年 2–4 月**搜索同一 Sentinel-2 tile `33SVB` 的备选影像。
+- 返回 **38 个**同瓦片候选结果；实际检查整景云量最低的 **5 个**候选的本地 SCL 4/5 覆盖率。
+- 选中 **`S2A_33SVB_20210206_1_L2A`**（2021-02-06），研究窗口内的 SCL 4/5 保留比例 **100.0%**；之前 2021-02-21 的旧影像为 **9.3%**。
+- 新影像全区域有效像元 n=262,144、mean NDVI **0.571**；旧影像筛选后 n=24,416、mean NDVI **0.453**。两组来自不同的空间样本，不应直接解释为植被变化。
+- 在两景**共同有效的 24,416 个相同像元位置**上：旧影像 mean **0.453**，新影像 mean **0.623**，描述性差异（新减旧）为 **+0.169**。
+- 共同位置比较消除了空间范围不一致的问题，但仍存在 **15 天时间差、可能的影像质量偏差、物候及观测条件差异**；不能推断已经发生真实植被变化。
+
+## 7. Coding / Debugging Cases
+
+- **`plt.show()` 阻塞终端：** Mac 的 Matplotlib GUI 会等待窗口关闭。按 Control+C 出现 `KeyboardInterrupt` 不是 NDVI 公式错误；保存图像后用 `plt.close()` 可避免阻塞。
+- **运行错脚本：** 误将 `ndvi_demo.py` 的模拟均值 0.323 当作真实影像结果。诊断前必须先检查运行的文件路径及数据源。
+- **GeoTIFF 无法在文本编辑器打开：** TIFF 是二进制格式，应使用 Rasterio 或 GIS 工具读取。
+- **像元对齐：** 用 CRS + transform + width/height 定义目标网格；20 m SCL 使用最近邻对齐，连续光谱数据可按场景选合适重采样方法。
+- **远程大影像：** 按固定 window 读取 COG；中间 GeoTIFF 保存本地，减少重复网络读取。
+
+## 8. 可复现性与下一步
+
+- 现有本地项目目录：`earth-observation-ndvi/`；重要脚本包括 `real_sentinel_ndvi.py`、`ndvi_distribution.py`、`ndvi_scl_quality.py`、`find_clear_sentinel_scenes.py` 和 `compare_sentinel_scenes.py`。
+- 输出包括 georeferenced NDVI TIFF、质量筛选前后地图、跨日期对比图和选中场景元数据 JSON。
+- 已完成英文 README 与依赖清单的整理；**尚需用户在本地核对、提交并推送该项目**，不把文档已生成误写成整个项目已经上 GitHub。
+- 适用范围：本例为真实卫星数据上的研究方法演练，而不是经过地面真值验证的生态变化研究。
+
+### 本阶段最重要的三句话
+
+1. **数据质量与样本选择会改变统计结果，分析前先检查可用覆盖率。**
+2. **只有对齐到相同地理网格和像元位置，跨影像比较才有基本空间可比性。**
+3. **描述性的 NDVI 差异不等于植被变化，更不等于因果推断。**
+
+---
 # 跨模块的核心研究思维
 
 ## 1. 先问问题，再选工具
@@ -1207,7 +1296,7 @@ P(Policy) ≈ 0.461
 
 ---
 
-# Weekly Update Template（Week 5 以后复制此模板）
+# Weekly Update Template（Week 6 以后复制此模板）
 
 ## Week N — [主题]
 
